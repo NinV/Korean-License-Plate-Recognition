@@ -1,0 +1,132 @@
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import Sequential, Model
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPool2D, AveragePooling2D, ReLU, Dropout, Input, \
+    Concatenate, Dense, Flatten
+
+
+def conv2D_batchnorm(use_batchnorm=True, batchnorm_first=True, *args, **kwargs):
+    layers = [Conv2D(*args,**kwargs)]
+    if use_batchnorm:
+        if batchnorm_first:
+            layers.extend([BatchNormalization(), ReLU()])
+        else:
+            layers.extend([ReLU(), BatchNormalization()])
+    return Sequential(layers)
+
+
+class LPRNet:
+    def __init__(self, num_classes, pattern_size=128, dropout=0.5, input_shape=(24, 94, 3), basic_block="small_fire", include_STN=False):
+        self.num_classes = num_classes
+        self.pattern_size = pattern_size
+        self.dropout = dropout
+        self.input_shape = input_shape
+
+        if basic_block == "small_fire":
+            self.basic_block = self.small_fire_block
+        elif basic_block == "fire":
+            self.basic_block = self.fire_block
+        elif basic_block == "resinc":
+            self.basic_block = self.resinc_block
+        else:
+            raise ValueError(
+                "Unrecognized '{}' basic block, basic_block value must be one of ['fire', 'small_fire', 'resinc']")
+        self.input_block = self.mixed_input_block
+
+        self.model = self._build()
+
+    def _build(self):
+        inputs = Input(self.input_shape)
+        x = self.input_block()(inputs)
+        x = self.basic_block(x.get_shape().as_list()[3], 256)(x)
+        x = self.convolution_block(x.get_shape().as_list()[3], 256, 2)(x)
+
+        x = Dropout(self.dropout)(x)
+        x = Conv2D(256, [4, 1])(x)
+        x = Dropout(self.dropout)(x)
+
+        classes = Conv2D(self.num_classes, [1, 13], padding="same")(x)
+        pattern = Flatten()(classes)
+        pattern = Dense(self.pattern_size)(pattern)
+        width = int(x.get_shape()[2])
+        pattern = tf.reshape(pattern, (-1, 1, 1, self.pattern_size))
+        pattern = tf.tile(pattern, [1, 1, width, 1])
+
+        x = Concatenate()([classes, pattern])
+        x = Conv2D(self.num_classes, [1, 1], padding="same")(x)
+        outs = tf.squeeze(x, [1])
+        return Model(inputs=inputs, outputs=outs)
+
+    @staticmethod
+    def fire_block(channel_in, channel_out):
+        return Sequential([Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
+                           Conv2D(channel_out // 4, [3, 3], padding="same", activation="relu"),
+                           Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
+                           ])
+
+    @staticmethod
+    def small_fire_block(channel_in, channel_out):
+        return Sequential([Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
+                           Conv2D(channel_out // 4, [3, 1], padding="same", activation="relu"),
+                           Conv2D(channel_out // 4, [1, 3], padding="same", activation="relu"),
+                           Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu")
+                           ])
+
+    @staticmethod
+    def resinc_block(channel_in, channel_out):
+        print(channel_in, channel_out)
+        inputs = Input(shape=[None, None, channel_in])
+        if channel_in == channel_out:
+            res = inputs
+        else:
+            res = Conv2D(channel_out, [1, 1], padding="same", activation="relu")(inputs)
+
+        inc1 = Conv2D(channel_out // 8, [1, 1], padding="same", activation="relu")(inputs)
+        inc1 = Conv2D(channel_out // 8, [3, 1], padding="same", activation="relu")(inc1)
+
+        inc2 = Conv2D(channel_out // 8, [1, 1], padding="same", activation="relu")(inputs)
+        inc2 = Conv2D(channel_out // 8, [1, 3], padding="same", activation="relu")(inc2)
+
+        inc = Concatenate(axis=-1)([inc1, inc2])
+        inc = Conv2D(channel_out, [1, 1], padding="same", activation="relu")(inc)
+        outputs = res + inc
+        return Model(inputs=inputs, outputs=outputs)
+
+    def mixed_input_block(self):
+        return Sequential([Conv2D(64, [3, 3], padding="same"),
+                           MaxPool2D([3, 3], strides=[1, 1]),
+                           self.basic_block(64, 128),
+                           MaxPool2D([3, 3], strides=[2, 1])
+                           ])
+
+    # Convolution block for CNN
+    def convolution_block(self, channel_in, channel_out, stride):
+        return Sequential([self.basic_block(channel_in, channel_out),
+                           MaxPool2D([3, 3], strides=(stride, 1))
+                           ])
+
+    def train(self):
+        raise NotImplemented
+
+    def predict(self):
+        raise NotImplemented
+
+    def save_weights(self):
+        raise NotImplemented
+
+    def load_weights(self):
+        raise NotImplemented
+
+    def save_checkpoint(self):
+        raise NotImplemented
+
+    def save(self):
+        raise NotImplemented
+
+    def summary(self):
+        self.model.summary()
+
+
+if __name__ == '__main__':
+    net = LPRNet(25, basic_block="resinc")
+    net.summary()
