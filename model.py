@@ -5,18 +5,15 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPool2D, Avera
     Concatenate, Dense, Flatten
 
 
-def conv2D_batchnorm(use_batchnorm=True, batchnorm_first=True, *args, **kwargs):
-    layers = [Conv2D(*args,**kwargs)]
-    if use_batchnorm:
-        if batchnorm_first:
-            layers.extend([BatchNormalization(), ReLU()])
-        else:
-            layers.extend([ReLU(), BatchNormalization()])
-    return Sequential(layers)
+def conv2D_batchnorm(*args, **kwargs):
+    return Sequential([Conv2D(*args, **kwargs),
+                       BatchNormalization(),
+                       ReLU()])
 
 
 class LPRNet:
-    def __init__(self, num_classes, pattern_size=128, dropout=0.5, input_shape=(24, 94, 3), basic_block="small_fire", include_STN=False):
+    def __init__(self, num_classes, pattern_size=128, dropout=0.5, input_shape=(24, 94, 3), basic_block="small_fire",
+                 include_STN=False):
         self.num_classes = num_classes
         self.pattern_size = pattern_size
         self.dropout = dropout
@@ -42,10 +39,10 @@ class LPRNet:
         x = self.convolution_block(x.get_shape().as_list()[3], 256, 2)(x)
 
         x = Dropout(self.dropout)(x)
-        x = Conv2D(256, [4, 1])(x)
+        x = conv2D_batchnorm(256, [4, 1])(x)
         x = Dropout(self.dropout)(x)
 
-        classes = Conv2D(self.num_classes, [1, 13], padding="same")(x)
+        classes = conv2D_batchnorm(self.num_classes, [1, 13], padding="same")(x)
         pattern = Flatten()(classes)
         pattern = Dense(self.pattern_size)(pattern)
         width = int(x.get_shape()[2])
@@ -53,47 +50,46 @@ class LPRNet:
         pattern = tf.tile(pattern, [1, 1, width, 1])
 
         x = Concatenate()([classes, pattern])
-        x = Conv2D(self.num_classes, [1, 1], padding="same")(x)
+        x = conv2D_batchnorm(self.num_classes, [1, 1], padding="same")(x)
         outs = tf.squeeze(x, [1])
         return Model(inputs=inputs, outputs=outs)
 
     @staticmethod
     def fire_block(channel_in, channel_out):
-        return Sequential([Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
-                           Conv2D(channel_out // 4, [3, 3], padding="same", activation="relu"),
-                           Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
+        return Sequential([conv2D_batchnorm(channel_out // 4, [1, 1], padding="same"),
+                           conv2D_batchnorm(channel_out // 4, [3, 3], padding="same"),
+                           conv2D_batchnorm(channel_out // 4, [1, 1], padding="same"),
                            ])
 
     @staticmethod
     def small_fire_block(channel_in, channel_out):
-        return Sequential([Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu"),
-                           Conv2D(channel_out // 4, [3, 1], padding="same", activation="relu"),
-                           Conv2D(channel_out // 4, [1, 3], padding="same", activation="relu"),
-                           Conv2D(channel_out // 4, [1, 1], padding="same", activation="relu")
+        return Sequential([conv2D_batchnorm(channel_out // 4, [1, 1], padding="same"),
+                           conv2D_batchnorm(channel_out // 4, [3, 1], padding="same"),
+                           conv2D_batchnorm(channel_out // 4, [1, 3], padding="same"),
+                           conv2D_batchnorm(channel_out // 4, [1, 1], padding="same")
                            ])
 
     @staticmethod
     def resinc_block(channel_in, channel_out):
-        print(channel_in, channel_out)
         inputs = Input(shape=[None, None, channel_in])
         if channel_in == channel_out:
             res = inputs
         else:
-            res = Conv2D(channel_out, [1, 1], padding="same", activation="relu")(inputs)
+            res = conv2D_batchnorm(channel_out, [1, 1], padding="same")(inputs)
 
-        inc1 = Conv2D(channel_out // 8, [1, 1], padding="same", activation="relu")(inputs)
-        inc1 = Conv2D(channel_out // 8, [3, 1], padding="same", activation="relu")(inc1)
+        inc1 = conv2D_batchnorm(channel_out // 8, [1, 1], padding="same")(inputs)
+        inc1 = conv2D_batchnorm(channel_out // 8, [3, 1], padding="same")(inc1)
 
-        inc2 = Conv2D(channel_out // 8, [1, 1], padding="same", activation="relu")(inputs)
-        inc2 = Conv2D(channel_out // 8, [1, 3], padding="same", activation="relu")(inc2)
+        inc2 = conv2D_batchnorm(channel_out // 8, [1, 1], padding="same")(inputs)
+        inc2 = conv2D_batchnorm(channel_out // 8, [1, 3], padding="same")(inc2)
 
         inc = Concatenate(axis=-1)([inc1, inc2])
-        inc = Conv2D(channel_out, [1, 1], padding="same", activation="relu")(inc)
+        inc = conv2D_batchnorm(channel_out, [1, 1], padding="same")(inc)
         outputs = res + inc
         return Model(inputs=inputs, outputs=outputs)
 
     def mixed_input_block(self):
-        return Sequential([Conv2D(64, [3, 3], padding="same"),
+        return Sequential([conv2D_batchnorm(64, [3, 3], padding="same"),
                            MaxPool2D([3, 3], strides=[1, 1]),
                            self.basic_block(64, 128),
                            MaxPool2D([3, 3], strides=[2, 1])
@@ -128,5 +124,5 @@ class LPRNet:
 
 
 if __name__ == '__main__':
-    net = LPRNet(25, basic_block="resinc")
+    net = LPRNet(25, basic_block="small_fire")
     net.summary()
