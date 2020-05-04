@@ -1,7 +1,8 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import Sequential, Model
-from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPool2D, AveragePooling2D, ReLU, Dropout, Input, \
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPool2D, Softmax, ReLU, Dropout, Input, \
     Concatenate, Dense, Flatten
 
 
@@ -51,7 +52,8 @@ class LPRNet:
 
         x = Concatenate()([classes, pattern])
         x = conv2D_batchnorm(self.num_classes, [1, 1], padding="same")(x)
-        outs = tf.squeeze(x, [1])
+        x = tf.squeeze(x, [1])
+        outs = Softmax()(x)
         return Model(inputs=inputs, outputs=outs)
 
     @staticmethod
@@ -104,8 +106,22 @@ class LPRNet:
     def train(self):
         raise NotImplemented
 
-    def predict(self):
-        raise NotImplemented
+    def predict(self, x, classnames):
+        pred = self.model.predict(x)
+        samples, times = pred.shape[:2]
+        input_length = tf.convert_to_tensor([times] * samples)
+        decodeds, logprobs = tf.keras.backend.ctc_decode(pred, input_length, greedy=True, beam_width=100, top_paths=1)
+        decodeds = np.array(decodeds[0])
+
+        results = []
+        for d in decodeds:
+            text = []
+            for idx in d:
+                if idx == -1:
+                    break
+                text.append(classnames[idx])
+            results.append(''.join(text))
+        return results
 
     def save_weights(self):
         raise NotImplemented
