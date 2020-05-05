@@ -20,6 +20,11 @@ def train(args):
     save_weights_only = args["save_weights_only"]
     loader = Loader(args["label"], args["img_dir"])
     net = LPRNet(loader.get_num_chars() + 1)
+
+    if args["pretrained"]:
+        net.load_weights(args["pretrained"])
+        print("Pretrained model loaded")
+
     model = net.model
     train_dataset = tf.data.Dataset.from_generator(loader,
                                                    output_types=(tf.float32, tf.int32, tf.int32)).batch(
@@ -76,11 +81,18 @@ def train(args):
 
 def parser_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--label", required=True, help="Path to label file")
-    parser.add_argument("-i", "--img_dir", required=True, help="Path to image folder")
+    # dataset
+    parser.add_argument("-l", "--label", required=True, help="Path to label file (training set)")
+    parser.add_argument("-i", "--img_dir", required=True, help="Path to image folder (training set)")
+    parser.add_argument("--valid_label", default="", help="Path to label file (validation set)")
+    parser.add_argument("--valid_img_dir", default="", help="Path to image folder (validation set)")
+
+    # save config
     parser.add_argument("-s", "--saved_dir", default="saved_models", help="folder for saving model")
     parser.add_argument("--save_weights_only", action="store_true", help="save weights only")
+    parser.add_argument("--save_every", type=int, default=100, help="Save model for every # steps")
 
+    # training hyperparameters
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--num_steps", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=10e-3, help="Initial learning rate")
@@ -88,9 +100,9 @@ def parser_args():
     parser.add_argument("--decay_rate", type=float, default=0.95, help="learning rate decay rate")
     parser.add_argument("--staircase", action="store_true", help="learning rate decay on step (default: smooth)")
 
-    parser.add_argument("--pretrained", action="store_true", help="Use pretrained model")
-    parser.add_argument("--saved_model", help="Path to saved_model")
-    parser.add_argument("--save_every", type=int, default=100, help="Save model for every # steps")
+    # load pre-trained
+    parser.add_argument("--pretrained", default="", help="Path to saved model")
+
     args = vars(parser.parse_args())
     return args
 
