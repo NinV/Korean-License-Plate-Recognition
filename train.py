@@ -17,12 +17,13 @@ def ctc_loss(labels, predicts, input_lengths, label_lengths):
 
 
 def train(args):
+    save_weights_only = args["save_weights_only"]
     loader = Loader(args["label"], args["img_dir"])
     net = LPRNet(loader.get_num_chars() + 1)
     model = net.model
     train_dataset = tf.data.Dataset.from_generator(loader,
                                                    output_types=(tf.float32, tf.int32, tf.int32)).batch(
-        args["batch_size"]).repeat(1)
+        args["batch_size"]).shuffle(len(loader))
     learning_rate = keras.optimizers.schedules.ExponentialDecay(args["learning_rate"],
                                                                 decay_steps=args["decay_steps"],
                                                                 decay_rate=args["decay_rate"],
@@ -43,24 +44,34 @@ def train(args):
         optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
         loss_value = float(loss_value)
-        print("[batch {}]Seen: {} samples, "
+        print("[batch {} - Seen: {} samples] "
               "Training loss: {}, "
               "learning_rate: {} ".format(step + 1,
-                                          float(loss_value),
                                           (step + 1) * args["batch_size"],
+                                          float(loss_value),
                                           optimizer._decayed_lr(
                                               tf.float32).numpy()
                                           ))
         if loss_value < best_loss:
             best_loss = loss_value
-            net.save(os.path.join(args["saved_dir"], "model_best.pb"))
+            if save_weights_only:
+                net.save_weights(os.path.join(args["saved_dir"], "weights_best.pb"))
+            else:
+                net.save(os.path.join(args["saved_dir"], "model_best.pb"))
             print("save best at batch: {}, loss: {}".format(step + 1, loss_value))
 
         # Log every 10 batches.
         if step % args["save_every"] == 0 and step > 0:
-            net.save(os.path.join(args["saved_dir"], "model_{}.pb".format(step + 1)))
+            if save_weights_only:
+                net.save_weights(os.path.join(args["saved_dir"], "weights_{}.pb".format(step + 1)))
+            else:
+                net.save(os.path.join(args["saved_dir"], "model_{}.pb".format(step + 1)))
             print("save at batch: {}".format(step + 1, loss_value))
-    net.save(os.path.join(args["saved_dir"], "model_last.pb"))
+
+    if save_weights_only:
+        net.save_weights(os.path.join(args["saved_dir"], "weights_last.pb"))
+    else:
+        net.save(os.path.join(args["saved_dir"], "model_last.pb"))
 
 
 def parser_args():
@@ -68,6 +79,7 @@ def parser_args():
     parser.add_argument("-l", "--label", required=True, help="Path to label file")
     parser.add_argument("-i", "--img_dir", required=True, help="Path to image folder")
     parser.add_argument("-s", "--saved_dir", default="saved_models", help="folder for saving model")
+    parser.add_argument("--save_weights_only", action="store_true", help="save weights only")
 
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--num_steps", type=int, default=1)

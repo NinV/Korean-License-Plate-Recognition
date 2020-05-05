@@ -123,14 +123,11 @@ class LPRNet:
             results.append(''.join(text))
         return results
 
-    def save_weights(self):
-        raise NotImplemented
+    def save_weights(self, filepath):
+        self.model.save_weights(filepath)
 
-    def load_weights(self):
-        raise NotImplemented
-
-    def save_checkpoint(self):
-        raise NotImplemented
+    def load_weights(self, filepath):
+        self.model.load_weights(filepath)
 
     def save(self, filepath):
         self.model.save(filepath)
@@ -140,6 +137,6 @@ class LPRNet:
 
 
 if __name__ == '__main__':
-    net = LPRNet(25, basic_block="small_fire")
-    net.summary()
-    net.model.save("LPR.pb")
+    model = LPRNet(46)
+    model.load_weights("saved_models/weights_last.pb")
+    model.summary()
