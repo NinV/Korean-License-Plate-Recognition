@@ -4,14 +4,14 @@ from tqdm import tqdm
 import cv2
 
 
-def normalize(img):
+def resize_and_normailze(img):
     width = 94
     height = 24
     return cv2.resize(img, (width, height)) / 255
 
 
 class Loader:
-    def __init__(self, labelfile, img_dir, preproc_func=normalize, load_all=False):
+    def __init__(self, labelfile, img_dir, preproc_func=resize_and_normailze, load_all=False):
         self.img_dir = img_dir
         self.preproc_func = preproc_func
         self.load_all = load_all
