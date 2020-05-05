@@ -18,7 +18,7 @@ def ctc_loss(labels, predicts, input_lengths, label_lengths):
 
 def train(args):
     save_weights_only = args["save_weights_only"]
-    loader = Loader(args["label"], args["img_dir"])
+    loader = Loader(args["label"], args["img_dir"], load_all=args["load_all"])
     net = LPRNet(loader.get_num_chars() + 1)
 
     if args["pretrained"]:
@@ -28,7 +28,7 @@ def train(args):
     model = net.model
     train_dataset = tf.data.Dataset.from_generator(loader,
                                                    output_types=(tf.float32, tf.int32, tf.int32)).batch(
-        args["batch_size"]).shuffle(len(loader))
+        args["batch_size"]).shuffle(len(loader)).prefetch(tf.data.experimental.AUTOTUNE)
     learning_rate = keras.optimizers.schedules.ExponentialDecay(args["learning_rate"],
                                                                 decay_steps=args["decay_steps"],
                                                                 decay_rate=args["decay_rate"],
@@ -86,6 +86,7 @@ def parser_args():
     parser.add_argument("-i", "--img_dir", required=True, help="Path to image folder (training set)")
     parser.add_argument("--valid_label", default="", help="Path to label file (validation set)")
     parser.add_argument("--valid_img_dir", default="", help="Path to image folder (validation set)")
+    parser.add_argument("--load_all", action="store_true", help="Load all dataset to RAM (for small dataset)")
 
     # save config
     parser.add_argument("-s", "--saved_dir", default="saved_models", help="folder for saving model")
