@@ -48,10 +48,11 @@ class Evaluator:
                 imgs.append(img)
                 labels.append(label)
                 label_lengths.append(label_length)
-
-        self.print_result(self._average(self.losses, last_batch_size),
-                          self._average(self.CERs, last_batch_size),
-                          self._average(self.WERs, last_batch_size))
+        loss = self._average(self.losses, last_batch_size)
+        cer = self._average(self.CERs, last_batch_size)
+        wer = self._average(self.WERs, last_batch_size)
+        self._print_result(loss, cer, wer)
+        return loss, cer, wer
 
     def _average(self, values, last_batch_size):
         if len(values) < 2:
@@ -101,7 +102,7 @@ class Evaluator:
         CER = sum(ed) / len(label_texts)
         return CER, WER
 
-    def print_result(self, loss, CER, WER):
+    def _print_result(self, loss, CER, WER):
         print("Number of samples in test set: {}\n"
               "mean loss: {}\n"
               "mean CER: {}\n"
