@@ -48,9 +48,9 @@ class Evaluator:
                 imgs.append(img)
                 labels.append(label)
                 label_lengths.append(label_length)
-        loss = self._average(self.losses, last_batch_size)
-        cer = self._average(self.CERs, last_batch_size)
-        wer = self._average(self.WERs, last_batch_size)
+        loss = self._average(self.losses, last_batch_size)[0]
+        cer = self._average(self.CERs, last_batch_size)[0]
+        wer = self._average(self.WERs, last_batch_size)[0]
         self._print_result(loss, cer, wer)
         return loss, cer, wer
 
