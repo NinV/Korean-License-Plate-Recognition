@@ -4,16 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 from model import LPRNet
 from loader import Loader
-
-
-def ctc_loss(labels, predicts, input_lengths, label_lengths):
-    loss = tf.keras.backend.ctc_batch_cost(
-        labels,
-        predicts,
-        input_lengths,
-        label_lengths)
-    loss = tf.keras.backend.mean(loss)
-    return loss
+from metrics import ctc_loss
 
 
 def train(args):

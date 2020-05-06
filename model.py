@@ -108,6 +108,9 @@ class LPRNet:
 
     def predict(self, x, classnames):
         pred = self.model.predict(x)
+        return self.decode_pred(pred, classnames)
+
+    def decode_pred(self, pred, classnames):
         samples, times = pred.shape[:2]
         input_length = tf.convert_to_tensor([times] * samples)
         decodeds, logprobs = tf.keras.backend.ctc_decode(pred, input_length, greedy=True, beam_width=100, top_paths=1)
