@@ -16,7 +16,7 @@ def ctc_loss(labels, predicts, input_lengths, label_lengths):
 
 class Evaluator:
     def __init__(self, model, labelfile, img_dir, batch_size=32):
-        self.loader = Loader(labelfile, img_dir, load_all=True)
+        self.loader = Loader(labelfile, img_dir, load_all=True, augmen_func=None)
         if len(self.loader) == 0:
             raise ValueError("Empty loader")
 

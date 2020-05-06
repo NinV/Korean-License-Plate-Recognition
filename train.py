@@ -69,11 +69,11 @@ def train(args):
                         net.save(os.path.join(args["saved_dir"], "model_best.pb"))
                     print("save best at batch: {}, loss: {}".format(step + 1, val_loss))
 
-            if save_weights_only:
-                net.save_weights(os.path.join(args["saved_dir"], "weights_{}.pb".format(step + 1)))
-            else:
-                net.save(os.path.join(args["saved_dir"], "model_{}.pb".format(step + 1)))
-            print("save at batch: {}".format(step + 1, loss_value))
+            # if save_weights_only:
+            #     net.save_weights(os.path.join(args["saved_dir"], "weights_{}.pb".format(step + 1)))
+            # else:
+            #     net.save(os.path.join(args["saved_dir"], "model_{}.pb".format(step + 1)))
+            # print("save at batch: {}".format(step + 1, loss_value))
 
     if save_weights_only:
         net.save_weights(os.path.join(args["saved_dir"], "weights_last.pb"))
