@@ -48,16 +48,16 @@ class Evaluator:
                 imgs.append(img)
                 labels.append(label)
                 label_lengths.append(label_length)
-        loss = self._average(self.losses, last_batch_size)[0]
-        cer = self._average(self.CERs, last_batch_size)[0]
-        wer = self._average(self.WERs, last_batch_size)[0]
+        loss = self._average(self.losses, last_batch_size)
+        cer = self._average(self.CERs, last_batch_size)
+        wer = self._average(self.WERs, last_batch_size)
         self._print_result(loss, cer, wer)
         return loss, cer, wer
 
     def _average(self, values, last_batch_size):
-        if len(values) < 2:
-            return values
-        return (sum(values[:-1]) + values[-1] * last_batch_size / self.batch_size) / len(values)
+        if len(values) == 1:
+            return values[0]
+        return (np.sum(values[:-1] * self.batch_size) + values[-1] * last_batch_size) / len(self.loader)
 
     def _flush(self, imgs, labels, label_lengths):
         imgs = np.array(imgs)
