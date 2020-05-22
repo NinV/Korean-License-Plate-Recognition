@@ -58,7 +58,7 @@ def train(args):
                                           ))
 
         # Log every 10 batches.
-        if step % args["save_every"] == 0 and step > 0:
+        if step % args["valid_interval"] == 0 and step > 0:
             if evaluator is not None:
                 val_loss, _, _ = evaluator.evaluate()
                 if val_loss < best_val_loss:
@@ -68,12 +68,6 @@ def train(args):
                     else:
                         net.save(os.path.join(args["saved_dir"], "model_best.pb"))
                     print("save best at batch: {}, loss: {}".format(step + 1, val_loss))
-
-            # if save_weights_only:
-            #     net.save_weights(os.path.join(args["saved_dir"], "weights_{}.pb".format(step + 1)))
-            # else:
-            #     net.save(os.path.join(args["saved_dir"], "model_{}.pb".format(step + 1)))
-            # print("save at batch: {}".format(step + 1, loss_value))
 
     if save_weights_only:
         net.save_weights(os.path.join(args["saved_dir"], "weights_last.pb"))
@@ -94,14 +88,14 @@ def parser_args():
     # save config
     parser.add_argument("-s", "--saved_dir", default="saved_models", help="folder for saving model")
     parser.add_argument("--save_weights_only", action="store_true", help="save weights only")
-    parser.add_argument("--save_every", type=int, default=100, help="Save model and evaluate interval")
+    parser.add_argument("--valid_interval", type=int, default=100, help="Save model and evaluate interval")
 
     # training hyperparameters
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--num_steps", type=int, default=10000)
     parser.add_argument("--learning_rate", type=float, default=10e-3, help="Initial learning rate")
-    parser.add_argument("--decay_steps", type=float, default=100, help="learning rate decay step")
-    parser.add_argument("--decay_rate", type=float, default=0.99, help="learning rate decay rate")
+    parser.add_argument("--decay_steps", type=float, default=100000, help="learning rate decay step")
+    parser.add_argument("--decay_rate", type=float, default=0.995, help="learning rate decay rate")
     parser.add_argument("--staircase", action="store_true", help="learning rate decay on step (default: smooth)")
 
     # load pre-trained
