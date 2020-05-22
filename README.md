@@ -5,7 +5,7 @@ We use the [KarPlate Dataset (Korean Car Plate Dataset)]([http://pr.gachon.ac.kr
 
 ## Dependencies
 - Python 3.6+
-- Tensorflow 1.5 or 2
+- Tensorflow 1.15 or 2
 - Opencv 4
 - tqdm
 - editdistance
