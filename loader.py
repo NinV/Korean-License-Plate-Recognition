@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from tqdm import tqdm
 import cv2
 
@@ -25,18 +26,19 @@ def normalize(img):
 
 
 def augmentation(img):
-    translation = RandomTranslation((-0.1, 0.1), (-0.1, 0.1))
-    rotation_and_scaling = RandomScalingAndRotation((-10, 10), (0.9, 1.1))
-    shearing = RandomShearing((-0.1, 0.1), (-0.1, 0.1))
-    color_distortion = ColorDistorion()
-    blurring = GaussianBlur(0.5)
-
-    h, w = img.shape[:2]
-    sequential = SequentialTransform([translation, rotation_and_scaling, shearing],
-                                     [color_distortion, blurring],
-                                     (w, h))
-    img_aug, _ = sequential.apply_transform(img, points=None, border_mode=cv2.BORDER_CONSTANT)
-    return img_aug
+    # translation = RandomTranslation((-0.1, 0.1), (-0.1, 0.1))
+    # rotation_and_scaling = RandomScalingAndRotation((-10, 10), (0.9, 1.1))
+    # shearing = RandomShearing((-0.1, 0.1), (-0.1, 0.1))
+    # color_distortion = ColorDistorion()
+    # blurring = GaussianBlur(0.1)
+    #
+    # h, w = img.shape[:2]
+    #
+    # sequential = SequentialTransform([random.choice([translation, rotation_and_scaling, shearing])],
+    #                                  [color_distortion, blurring],
+    #                                  (w, h))
+    # img_aug, _ = sequential.apply_transform(img, points=None, border_mode=cv2.BORDER_CONSTANT)
+    return img
 
 
 class Loader:
