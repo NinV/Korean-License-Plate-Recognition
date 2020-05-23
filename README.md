@@ -1,7 +1,7 @@
 ## Korean car license plate recognition using LPRNet
 This repository is based on the paper  [LPRNet: License Plate Recognition via Deep Neural Networks](https://arxiv.org/pdf/1806.10447.pdf). 
 
-We use the [KarPlate Dataset (Korean Car Plate Dataset)]([http://pr.gachon.ac.kr/ALPR.html](http://pr.gachon.ac.kr/ALPR.html)) for training and test model
+We use the [KarPlate Dataset](http://pr.gachon.ac.kr/ALPR.html) for training and test model
 
 ## Dependencies
 - Python 3.6+
