@@ -92,9 +92,9 @@ def parser_args():
 
     # training hyperparameters
     parser.add_argument("--batch_size", type=int, default=32)
-    parser.add_argument("--num_steps", type=int, default=10000)
+    parser.add_argument("--num_steps", type=int, default=100000)
     parser.add_argument("--learning_rate", type=float, default=10e-3, help="Initial learning rate")
-    parser.add_argument("--decay_steps", type=float, default=100000, help="learning rate decay step")
+    parser.add_argument("--decay_steps", type=float, default=10000, help="learning rate decay step")
     parser.add_argument("--decay_rate", type=float, default=0.995, help="learning rate decay rate")
     parser.add_argument("--staircase", action="store_true", help="learning rate decay on step (default: smooth)")
 
