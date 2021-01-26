@@ -11,9 +11,6 @@ We use the [KarPlate Dataset](http://pr.gachon.ac.kr/ALPR.html) for training and
 - editdistance
 
 ## **Usage**
-### *Dataset*
-Download [data.zip](https://bit.ly/3egQ9jU), unzip and move into **data** folder for training and testing
-
 ### *Pre-trained model*
 Download [best_weights.zip](https://bit.ly/2zt5hMc), unzip and move into **saved_models** folder for testing
 
